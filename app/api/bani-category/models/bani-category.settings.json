@@ -19,8 +19,8 @@
       "unique": true
     },
     "bani": {
-      "collection": "bani",
       "via": "bani_categories",
+      "collection": "bani",
       "dominant": true
     }
   }

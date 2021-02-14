@@ -23,8 +23,24 @@
       "type": "integer"
     },
     "bani_categories": {
-      "via": "bani",
-      "collection": "bani-category"
+      "collection": "bani-category",
+      "via": "bani"
+    },
+    "price_1": {
+      "type": "integer"
+    },
+    "price_2": {
+      "type": "integer"
+    },
+    "price_3": {
+      "type": "integer"
+    },
+    "price_4": {
+      "type": "integer"
+    },
+    "discount": {
+      "type": "integer",
+      "default": 0
     }
   }
 }
