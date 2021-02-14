@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "bani",
+  "info": {
+    "name": "bani",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "unique": true
+    },
+    "slug": {
+      "type": "string",
+      "unique": true
+    },
+    "number": {
+      "type": "integer"
+    },
+    "bani_categories": {
+      "via": "bani",
+      "collection": "bani-category"
+    }
+  }
+}

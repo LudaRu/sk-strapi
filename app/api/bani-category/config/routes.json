@@ -1,0 +1,52 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/bani-categories",
+      "handler": "bani-category.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/bani-categories/count",
+      "handler": "bani-category.count",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/bani-categories/:id",
+      "handler": "bani-category.findOne",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/bani-categories",
+      "handler": "bani-category.create",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/bani-categories/:id",
+      "handler": "bani-category.update",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/bani-categories/:id",
+      "handler": "bani-category.delete",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}

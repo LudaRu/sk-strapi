@@ -1,0 +1,39 @@
+version: '3.3'
+services:
+  agent:
+    image: portainer/agent
+    volumes:
+      - type: npipe
+        source: \\.\pipe\docker_engine
+        target: \\.\pipe\docker_engine
+      - type: bind
+        source: C:\ProgramData\docker\volumes
+        target: C:\ProgramData\docker\volumes
+    networks:
+      - agent_network
+    deploy:
+      mode: global
+      placement:
+        constraints: [node.platform.os == windows]
+  portainer:
+    image: portainer/portainer-ce
+    command: -H tcp://tasks.portainer_agent:9001 --tlsskipverify
+    ports:
+      - "9000:9000"
+      - "8000:8000"
+    volumes:
+      - portainer_data:C:\data
+    networks:
+      - agent_network
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+          - node.platform.os == windows
+networks:
+  agent_network:
+    driver: overlay
+volumes:
+  portainer_data:
