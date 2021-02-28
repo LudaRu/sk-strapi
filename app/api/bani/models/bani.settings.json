@@ -41,6 +41,39 @@
     "discount": {
       "type": "integer",
       "default": 0
+    },
+    "opt_size_bani_w": {
+      "type": "decimal"
+    },
+    "opt_size_bani_h": {
+      "type": "decimal"
+    },
+    "opt_size_veranda_w": {
+      "type": "decimal"
+    },
+    "opt_size_veranda_h": {
+      "type": "decimal"
+    },
+    "opt_size_parnoi_w": {
+      "type": "decimal"
+    },
+    "opt_size_parnoi_h": {
+      "type": "decimal"
+    },
+    "opt_count_rooms": {
+      "type": "integer"
+    },
+    "opt_size_wall": {
+      "type": "decimal"
+    },
+    "opt_dot_foundation": {
+      "type": "integer"
+    },
+    "opt_ceiling_height": {
+      "type": "decimal"
+    },
+    "opt_roof_area": {
+      "type": "decimal"
     }
   }
 }

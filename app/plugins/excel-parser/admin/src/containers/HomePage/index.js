@@ -38,14 +38,29 @@ const HomePage = () => {
             .then(response => response.json())
             .then(data => {
               if (data.length) {
-
                 const updateData = {
                   price_1: ws.W4.v,
                   price_2: ws.X4.v,
                   price_3: ws.Y4.v,
                   price_4: ws.Z4.v,
                   discount: ws.C4.v,
+
+                  opt_size_bani_w: ws.D22.v,
+                  opt_size_bani_h: ws.E22.v,
+                  opt_size_veranda_w: ws.D23.v,
+                  opt_size_veranda_h: ws.E23.v,
+                  opt_size_parnoi_w: ws.D24.v,
+                  opt_size_parnoi_h: ws.E24.v,
+
+                  opt_count_rooms: ws.D25.v, // Общее Кол-во помещений (вкл веранду)
+                  opt_size_wall: ws.D26.v, // Общая длинна перегородок
+                  opt_dot_foundation: ws.D27.v, // Количество точек фундамент.
+                  opt_ceiling_height: ws.D28.v, // Высота потолка.
+                  opt_roof_area: ws.D29.v, // Площадь кровли
+
                 }
+
+                console.log('updateData', updateData)
 
                 fetch(`/banis/${data[0].id}`, {
                   headers: {
