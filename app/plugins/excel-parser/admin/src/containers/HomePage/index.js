@@ -9,10 +9,7 @@ import React, {memo, useState} from 'react';
 import pluginId from '../../pluginId';
 import {auth} from 'strapi-helper-plugin';
 import * as XLSX from "xlsx";
-import { Button, InputText } from '@buffetjs/core';
-
-
-const COLOR_TITLE = "DEEBF7"
+import {Button, InputText} from '@buffetjs/core';
 
 const HomePage = () => {
   const [pars, setPars] = useState(false);
@@ -46,11 +43,12 @@ const HomePage = () => {
               if (data.length) {
 
                 const updateData = {
-                  price_1: ws.W4.v,
-                  price_2: ws.X4.v,
-                  price_3: ws.Y4.v,
-                  price_4: ws.Z4.v,
-                  discount: ws.C4.v,
+                  // price_1: ws.W4.v,
+                  price_1: ws.X4.v,
+                  price_2: ws.Y4.v,
+                  price_3: ws.Z4.v,
+                  price_4: 0,
+                  discount: ws.G7.v,
 
                   opt_size_bani_w: ws.D22.v,
                   opt_size_bani_h: ws.E22.v,
@@ -88,13 +86,30 @@ const HomePage = () => {
       wb.SheetNames.forEach(wsName => {
         const projectCode = wsName.split(' ')[0].split('-')
 
-
-        let kits = false
         if (typeof projectCode[0] === 'string' && Number(projectCode[1])) {
           const ws = wb.Sheets[wsName];
 
           console.log(wsName, ws)
 
+          const updateData = {
+            base: [
+              {category: 'Нижняя Обвязка', name: 'Брус 100х100 мм. Хвоя'},
+              {category: 'Лаги пола', name: 'Доска 40х100мм. Ест. Влажности'},
+              {category: 'Каркас стен', name: 'Доска 40х100мм. Ест. Влажности'},
+              {category: 'Изоляция стен', name: 'Ветро,пароизоляция, Изофлекс"А""В"'},
+              {category: 'Утепление', name: 'Толщина 50мм. Только парное отделение'},
+              {category: 'Утеплитель', name: 'Утеплитель Рулонный "Кнауф", "Изовер"'},
+              {category: 'Внешняя отделка', name: 'Евровагонка сорт "ВС"'},
+              {category: 'Кровля покрытие', name: 'Профлист С-10 Оцынкованный'},
+              {category: 'Внутренняя отделка', name: 'Стены и потолки вагонка хвоя сорт "ВС"'},
+              {category: 'Полы по бане', name: 'Доска Строганная 40мм. Естественной влажности, хвоя'},
+              {category: 'Окна', name: 'Деревянные в 1 стекло без открывания'},
+              {category: 'Двери', name: 'Деревянные банные "ласточкин хвост", хвоя'},
+            ],
+            kit_1: [],
+            kit_2: [],
+            kit_3: [],
+          }
 
           fetch(`/banis?number=${projectCode[1]}`)
             .then(response => response.json())
@@ -102,32 +117,70 @@ const HomePage = () => {
               if (data.length) {
 
                 // парсинг комплектаций
-                if (!kits) {
-                  kits = []
+                const START_POS = 43
 
-                  const kit_1 = []
-                  const kit_2 = []
-                  const kit_3 = []
-                  const kit_4 = []
+                let CURRENT_CAT_I = -1
 
-                  const START_POS = 44
-                  for (let i = 0; i < 3; i++) {
-                    const pos = START_POS + i
+                for (let i = 0; i < 200; i++) {
+                  const pos = START_POS + i
+                  if (!ws['M' + pos]) {
+                    break
+                  }
 
-                    if (ws['W' + pos].v) {
+                  // Категория
+                  if (ws['M' + pos].v && ws['M' + pos].s.fgColor.rgb === 'DEEBF7') {
+                    console.log(ws['M' + pos].v)
+                    // Удаление пустых категорий
+                    // if (CURRENT_CAT_I !== -1 && updateData.kit_1[CURRENT_CAT_I] && updateData.kit_1[CURRENT_CAT_I].items.length  ) {
+                    //
+                    // }
 
+                    CURRENT_CAT_I = CURRENT_CAT_I+1
+                    updateData.kit_1[CURRENT_CAT_I] = {
+                      category: ws['M' + pos].v,
+                      items: []
+                    }
+                    updateData.kit_2[CURRENT_CAT_I] = {
+                      category: ws['M' + pos].v,
+                      items: []
+                    }
+                    updateData.kit_3[CURRENT_CAT_I] = {
+                      category: ws['M' + pos].v,
+                      items: []
                     }
 
+                  }
 
+                  // Подкатегория
+                  if (ws['M' + pos].v && ws['M' + pos].s.fgColor.rgb !== 'DEEBF7') {
+                    console.log('CURRENT_CAT_I', CURRENT_CAT_I)
+                    // kit 1
+                    if (ws['X' + pos] && ws['X' + pos].v) {
+                      updateData.kit_1[CURRENT_CAT_I].items.push(
+                        {name: ws['M' + pos].v}
+                      )
+                    }
+
+                    // kit 2
+                    if (ws['Y' + pos] && ws['Y' + pos].v) {
+                      updateData.kit_2[CURRENT_CAT_I].items.push(
+                        {name: ws['M' + pos].v}
+                      )
+                    }
+
+                    // kit 3
+                    if (ws['Z' + pos] && ws['Z' + pos].v) {
+                      updateData.kit_3[CURRENT_CAT_I].items.push(
+                        {name: ws['M' + pos].v}
+                      )
+                    }
                   }
                 }
 
-                const updateData = {
-                  Kits: []
-                }
 
-                console.log('updateData', updateData)
+                console.log('updateData', {kits: updateData})
 
+                setPars('Загрузка...')
                 fetch(`/banis/${data[0].id}`, {
                   headers: {
                     'Authorization': 'Bearer ' + auth.getToken(),
@@ -136,14 +189,13 @@ const HomePage = () => {
                   withCredentials: true,
                   credentials: 'include',
                   method: 'PUT',
-                  body: JSON.stringify(updateData),
-                }).then(r => setPars(wsName))
+                  body: JSON.stringify({kits: updateData}),
+                }).then(r => setPars('Готово'))
 
               }
             });
         }
       })
-      setPars('Готово')
 
     };
   };
