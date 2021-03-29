@@ -9,9 +9,15 @@ import React, {memo, useState} from 'react';
 import pluginId from '../../pluginId';
 import {auth} from 'strapi-helper-plugin';
 import * as XLSX from "xlsx";
+import * as XLSX_CALC from "xlsx-calc";
 import {Button, InputText} from '@buffetjs/core';
 
 const HomePage = () => {
+  XLSX_CALC.XLSX_CALC.xlsx_Fx.CEILING = (number, significance) => {
+    console.log(234234)
+    return Math.ceil(number / significance) * significance;
+  }
+
   const [pars, setPars] = useState(false);
 
   const readExcel = (file) => {
@@ -27,17 +33,20 @@ const HomePage = () => {
         cellStyles: true
       });
 
-      // Обновление цен
-      wb.SheetNames.forEach(wsName => {
-        const projectCode = wsName.split(' ')[0].split('-')
+      const ws = wb.Sheets['Калькулятор'];
 
-        if (typeof projectCode[0] === 'string' && Number(projectCode[1])) {
-          const ws = wb.Sheets[wsName];
-
-          console.log(wsName, ws)
+      console.log('Калькулятор', ws)
+      console.log('wb', wb)
 
 
-          fetch(`/banis?number=${projectCode[1]}`)
+      console.log('XLSX_CALC', XLSX_CALC)
+      for (let i = 1; i < 100; i++) { // выведет 0, затем 1, затем 2
+        wb.Sheets['Калькулятор'].E4.v = i
+        XLSX_CALC.XLSX_CALC(wb)
+        console.log('i', i, wb)
+        try {
+
+          fetch(`/banis?number=${i}`)
             .then(response => response.json())
             .then(data => {
               if (data.length) {
@@ -64,8 +73,6 @@ const HomePage = () => {
                   opt_roof_area: ws.D29.v, // Площадь кровли
                 }
 
-                console.log('updateData', updateData)
-
                 fetch(`/banis/${data[0].id}`, {
                   headers: {
                     'Authorization': 'Bearer ' + auth.getToken(),
@@ -75,127 +82,135 @@ const HomePage = () => {
                   credentials: 'include',
                   method: 'PUT',
                   body: JSON.stringify(updateData),
-                }).then(r => setPars(wsName))
+                }).then(r => setPars('кб-' + i))
 
               }
             });
+        } catch (e) {
+          setPars('Последнея КБ-' + i)
+          console.error(e)
+          break
         }
-      })
 
-      // Обновление комплектаций
-      wb.SheetNames.forEach(wsName => {
-        const projectCode = wsName.split(' ')[0].split('-')
+      }
+      setPars('Готово')
 
-        if (typeof projectCode[0] === 'string' && Number(projectCode[1])) {
-          const ws = wb.Sheets[wsName];
-
-          console.log(wsName, ws)
-
-          const updateData = {
-            base: [
-              {category: 'Нижняя Обвязка', name: 'Брус 100х100 мм. Хвоя'},
-              {category: 'Лаги пола', name: 'Доска 40х100мм. Ест. Влажности'},
-              {category: 'Каркас стен', name: 'Доска 40х100мм. Ест. Влажности'},
-              {category: 'Изоляция стен', name: 'Ветро,пароизоляция, Изофлекс"А""В"'},
-              {category: 'Утепление', name: 'Толщина 50мм. Только парное отделение'},
-              {category: 'Утеплитель', name: 'Утеплитель Рулонный "Кнауф", "Изовер"'},
-              {category: 'Внешняя отделка', name: 'Евровагонка сорт "ВС"'},
-              {category: 'Кровля покрытие', name: 'Профлист С-10 Оцынкованный'},
-              {category: 'Внутренняя отделка', name: 'Стены и потолки вагонка хвоя сорт "ВС"'},
-              {category: 'Полы по бане', name: 'Доска Строганная 40мм. Естественной влажности, хвоя'},
-              {category: 'Окна', name: 'Деревянные в 1 стекло без открывания'},
-              {category: 'Двери', name: 'Деревянные банные "ласточкин хвост", хвоя'},
-            ],
-            kit_1: [],
-            kit_2: [],
-            kit_3: [],
-          }
-
-          fetch(`/banis?number=${projectCode[1]}`)
-            .then(response => response.json())
-            .then(data => {
-              if (data.length) {
-
-                // парсинг комплектаций
-                const START_POS = 43
-
-                let CURRENT_CAT_I = -1
-
-                for (let i = 0; i < 200; i++) {
-                  const pos = START_POS + i
-                  if (!ws['M' + pos]) {
-                    break
-                  }
-
-                  // Категория
-                  if (ws['M' + pos].v && ws['M' + pos].s.fgColor.rgb === 'DEEBF7') {
-                    console.log(ws['M' + pos].v)
-                    // Удаление пустых категорий
-                    // if (CURRENT_CAT_I !== -1 && updateData.kit_1[CURRENT_CAT_I] && updateData.kit_1[CURRENT_CAT_I].items.length  ) {
-                    //
-                    // }
-
-                    CURRENT_CAT_I = CURRENT_CAT_I+1
-                    updateData.kit_1[CURRENT_CAT_I] = {
-                      category: ws['M' + pos].v,
-                      items: []
-                    }
-                    updateData.kit_2[CURRENT_CAT_I] = {
-                      category: ws['M' + pos].v,
-                      items: []
-                    }
-                    updateData.kit_3[CURRENT_CAT_I] = {
-                      category: ws['M' + pos].v,
-                      items: []
-                    }
-
-                  }
-
-                  // Подкатегория
-                  if (ws['M' + pos].v && ws['M' + pos].s.fgColor.rgb !== 'DEEBF7') {
-                    console.log('CURRENT_CAT_I', CURRENT_CAT_I)
-                    // kit 1
-                    if (ws['X' + pos] && ws['X' + pos].v) {
-                      updateData.kit_1[CURRENT_CAT_I].items.push(
-                        {name: ws['M' + pos].v}
-                      )
-                    }
-
-                    // kit 2
-                    if (ws['Y' + pos] && ws['Y' + pos].v) {
-                      updateData.kit_2[CURRENT_CAT_I].items.push(
-                        {name: ws['M' + pos].v}
-                      )
-                    }
-
-                    // kit 3
-                    if (ws['Z' + pos] && ws['Z' + pos].v) {
-                      updateData.kit_3[CURRENT_CAT_I].items.push(
-                        {name: ws['M' + pos].v}
-                      )
-                    }
-                  }
-                }
-
-
-                console.log('updateData', {kits: updateData})
-
-                setPars('Загрузка...')
-                fetch(`/banis/${data[0].id}`, {
-                  headers: {
-                    'Authorization': 'Bearer ' + auth.getToken(),
-                    'Content-Type': 'application/json'
-                  },
-                  withCredentials: true,
-                  credentials: 'include',
-                  method: 'PUT',
-                  body: JSON.stringify({kits: updateData}),
-                }).then(r => setPars('Готово'))
-
-              }
-            });
-        }
-      })
+      //
+      //
+      // // Обновление комплектаций
+      // wb.SheetNames.forEach(wsName => {
+      //   const projectCode = wsName.split(' ')[0].split('-')
+      //
+      //   if (typeof projectCode[0] === 'string' && Number(projectCode[1])) {
+      //     const ws = wb.Sheets[wsName];
+      //
+      //     console.log(wsName, ws)
+      //
+      //     const updateData = {
+      //       base: [
+      //         {category: 'Нижняя Обвязка', name: 'Брус 100х100 мм. Хвоя'},
+      //         {category: 'Лаги пола', name: 'Доска 40х100мм. Ест. Влажности'},
+      //         {category: 'Каркас стен', name: 'Доска 40х100мм. Ест. Влажности'},
+      //         {category: 'Изоляция стен', name: 'Ветро,пароизоляция, Изофлекс"А""В"'},
+      //         {category: 'Утепление', name: 'Толщина 50мм. Только парное отделение'},
+      //         {category: 'Утеплитель', name: 'Утеплитель Рулонный "Кнауф", "Изовер"'},
+      //         {category: 'Внешняя отделка', name: 'Евровагонка сорт "ВС"'},
+      //         {category: 'Кровля покрытие', name: 'Профлист С-10 Оцынкованный'},
+      //         {category: 'Внутренняя отделка', name: 'Стены и потолки вагонка хвоя сорт "ВС"'},
+      //         {category: 'Полы по бане', name: 'Доска Строганная 40мм. Естественной влажности, хвоя'},
+      //         {category: 'Окна', name: 'Деревянные в 1 стекло без открывания'},
+      //         {category: 'Двери', name: 'Деревянные банные "ласточкин хвост", хвоя'},
+      //       ],
+      //       kit_1: [],
+      //       kit_2: [],
+      //       kit_3: [],
+      //     }
+      //
+      //     fetch(`/banis?number=${projectCode[1]}`)
+      //       .then(response => response.json())
+      //       .then(data => {
+      //         if (data.length) {
+      //
+      //           // парсинг комплектаций
+      //           const START_POS = 43
+      //
+      //           let CURRENT_CAT_I = -1
+      //
+      //           for (let i = 0; i < 200; i++) {
+      //             const pos = START_POS + i
+      //             if (!ws['M' + pos]) {
+      //               break
+      //             }
+      //
+      //             // Категория
+      //             if (ws['M' + pos].v && ws['M' + pos].s.fgColor.rgb === 'DEEBF7') {
+      //               console.log(ws['M' + pos].v)
+      //               // Удаление пустых категорий
+      //               // if (CURRENT_CAT_I !== -1 && updateData.kit_1[CURRENT_CAT_I] && updateData.kit_1[CURRENT_CAT_I].items.length  ) {
+      //               //
+      //               // }
+      //
+      //               CURRENT_CAT_I = CURRENT_CAT_I + 1
+      //               updateData.kit_1[CURRENT_CAT_I] = {
+      //                 category: ws['M' + pos].v,
+      //                 items: []
+      //               }
+      //               updateData.kit_2[CURRENT_CAT_I] = {
+      //                 category: ws['M' + pos].v,
+      //                 items: []
+      //               }
+      //               updateData.kit_3[CURRENT_CAT_I] = {
+      //                 category: ws['M' + pos].v,
+      //                 items: []
+      //               }
+      //
+      //             }
+      //
+      //             // Подкатегория
+      //             if (ws['M' + pos].v && ws['M' + pos].s.fgColor.rgb !== 'DEEBF7') {
+      //               console.log('CURRENT_CAT_I', CURRENT_CAT_I)
+      //               // kit 1
+      //               if (ws['X' + pos] && ws['X' + pos].v) {
+      //                 updateData.kit_1[CURRENT_CAT_I].items.push(
+      //                   {name: ws['M' + pos].v}
+      //                 )
+      //               }
+      //
+      //               // kit 2
+      //               if (ws['Y' + pos] && ws['Y' + pos].v) {
+      //                 updateData.kit_2[CURRENT_CAT_I].items.push(
+      //                   {name: ws['M' + pos].v}
+      //                 )
+      //               }
+      //
+      //               // kit 3
+      //               if (ws['Z' + pos] && ws['Z' + pos].v) {
+      //                 updateData.kit_3[CURRENT_CAT_I].items.push(
+      //                   {name: ws['M' + pos].v}
+      //                 )
+      //               }
+      //             }
+      //           }
+      //
+      //
+      //           console.log('updateData', {kits: updateData})
+      //
+      //           setPars('Загрузка...')
+      //           fetch(`/banis/${data[0].id}`, {
+      //             headers: {
+      //               'Authorization': 'Bearer ' + auth.getToken(),
+      //               'Content-Type': 'application/json'
+      //             },
+      //             withCredentials: true,
+      //             credentials: 'include',
+      //             method: 'PUT',
+      //             body: JSON.stringify({kits: updateData}),
+      //           }).then(r => setPars('Готово'))
+      //
+      //         }
+      //       });
+      //   }
+      // })
 
     };
   };

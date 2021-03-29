@@ -22,7 +22,8 @@
     "strapi-plugin-upload": "3.5.1",
     "strapi-plugin-users-permissions": "3.5.1",
     "strapi-utils": "3.5.1",
-    "xlsx": "^0.16.9"
+    "xlsx": "^0.16.9",
+    "xlsx-calc": "^0.6.8"
   },
   "author": {
     "name": "A Strapi developer"
