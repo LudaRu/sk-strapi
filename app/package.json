@@ -11,19 +11,19 @@
   },
   "devDependencies": {},
   "dependencies": {
-    "knex": "^0.21.18",
+    "knex": "^0.95.4",
     "pg": "latest",
-    "strapi": "3.5.1",
-    "strapi-admin": "3.5.1",
-    "strapi-connector-bookshelf": "3.5.1",
-    "strapi-plugin-content-manager": "3.5.1",
-    "strapi-plugin-content-type-builder": "3.5.1",
-    "strapi-plugin-email": "3.5.1",
-    "strapi-plugin-upload": "3.5.1",
-    "strapi-plugin-users-permissions": "3.5.1",
-    "strapi-utils": "3.5.1",
+    "strapi": "3.5.4",
+    "strapi-admin": "3.5.4",
+    "strapi-connector-bookshelf": "3.5.4",
+    "strapi-plugin-content-manager": "3.5.4",
+    "strapi-plugin-content-type-builder": "3.5.4",
+    "strapi-plugin-email": "3.5.4",
+    "strapi-plugin-upload": "3.5.4",
+    "strapi-plugin-users-permissions": "3.5.4",
+    "strapi-utils": "3.5.4",
     "xlsx": "^0.16.9",
-    "xlsx-calc": "^0.6.8"
+    "xlsx-calc": "git://github.com/LudaRu/xlsx-calc.git#master"
   },
   "author": {
     "name": "A Strapi developer"

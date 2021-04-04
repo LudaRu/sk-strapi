@@ -13,13 +13,31 @@ import * as XLSX_CALC from "xlsx-calc";
 import {Button, InputText} from '@buffetjs/core';
 
 const HomePage = () => {
-  XLSX_CALC.XLSX_CALC.xlsx_Fx.CEILING = (number, significance) => {
-    console.log(234234)
-    return Math.ceil(number / significance) * significance;
-  }
-
   const [pars, setPars] = useState(false);
+  const categories = [
+    'КОНСТРУКТИВ ОСНОВАНИЯ КАРКАСА',
+    'КРОВЛЯ',
+    'УТЕПЛЕНИЕ',
+    'ВНЕШНЯЯ ОТДЕЛКА',
+    'НАСТИЛ ПОЛА',
+    'ВНУТРЕННЯЯ ОТТДЕЛКА',
+    'ОКНА',
+    'ДВЕРИ',
+    'ПОЛОГА В ПАРНОЙ',
+    'ФИНИШНАЯ ОТДЕЛКА: ПЛИНТУСА ОБНАЛИЧКА',
+    'КОММУНИКАЦИИ, БЛАГОУСТРОЙСТВО',
+    'ЗАЩИТА СТРОЕНИЯ ОТ ВНЕШНИХ ФАКТОРОВ',
 
+    'ПОЖАРНАЯ БЕЗОПАСНОСТЬ',
+
+    'ФУНДАМЕНТ',
+
+    'ПЕЧЬ СТАЛЬНАЯ',
+    'ПЕЧЬ ЧУГУННАЯ',
+    'ОБУСТРОЙСТВО ПЕЧИ',
+    'БАК',
+    'ДЫМОХОД',
+  ]
   const readExcel = (file) => {
     const fileReader = new FileReader();
     fileReader.readAsArrayBuffer(file);
@@ -33,65 +51,194 @@ const HomePage = () => {
         cellStyles: true
       });
 
-      const ws = wb.Sheets['Калькулятор'];
-
-      console.log('Калькулятор', ws)
-      console.log('wb', wb)
-
-
       console.log('XLSX_CALC', XLSX_CALC)
-      for (let i = 1; i < 100; i++) { // выведет 0, затем 1, затем 2
-        wb.Sheets['Калькулятор'].E4.v = i
+      for (let i = 1; i < 50; i++) { // выведет 0, затем 1, затем 2
+        wb.Sheets['Калькулятор каркас'].T8.v = i
         XLSX_CALC.XLSX_CALC(wb)
-        console.log('i', i, wb)
-        try {
+        const ws = wb.Sheets['Калькулятор каркас']
 
-          fetch(`/banis?number=${i}`)
-            .then(response => response.json())
-            .then(data => {
-              if (data.length) {
-
-                const updateData = {
-                  // price_1: ws.W4.v,
-                  price_1: ws.X4.v,
-                  price_2: ws.Y4.v,
-                  price_3: ws.Z4.v,
-                  price_4: 0,
-                  discount: ws.G7.v,
-
-                  opt_size_bani_w: ws.D22.v,
-                  opt_size_bani_h: ws.E22.v,
-                  opt_size_veranda_w: ws.D23.v,
-                  opt_size_veranda_h: ws.E23.v,
-                  opt_size_parnoi_w: ws.D24.v,
-                  opt_size_parnoi_h: ws.E24.v,
-
-                  opt_count_rooms: ws.D25.v, // Общее Кол-во помещений (вкл веранду)
-                  opt_size_wall: ws.D26.v, // Общая длинна перегородок
-                  opt_dot_foundation: ws.D27.v, // Количество точек фундамент.
-                  opt_ceiling_height: ws.D28.v, // Высота потолка.
-                  opt_roof_area: ws.D29.v, // Площадь кровли
-                }
-
-                fetch(`/banis/${data[0].id}`, {
-                  headers: {
-                    'Authorization': 'Bearer ' + auth.getToken(),
-                    'Content-Type': 'application/json'
-                  },
-                  withCredentials: true,
-                  credentials: 'include',
-                  method: 'PUT',
-                  body: JSON.stringify(updateData),
-                }).then(r => setPars('кб-' + i))
-
-              }
-            });
-        } catch (e) {
-          setPars('Последнея КБ-' + i)
-          console.error(e)
+        if (ws.E5.v == 0) {
           break
         }
 
+        const updateData = {
+          price_1: ws.Z3.v.toFixed(),
+          discount: 0,
+          opt_size_bani_w: ws.E6.v,
+          opt_size_bani_h: ws.F6.v,
+          opt_size_veranda_w: ws.E7.v,
+          opt_size_veranda_h: ws.F7.v,
+          opt_size_parnoi_w: ws.E8.v,
+          opt_size_parnoi_h: ws.F8.v,
+
+          opt_count_rooms: ws.E9.v, // Общее Кол-во помещений (вкл веранду)
+          opt_size_wall: ws.E10.v, // Общая длинна перегородок
+          opt_dot_foundation: ws.E11.v, // Количество точек фундамент.
+          opt_ceiling_height: ws.E12.v, // Высота потолка.
+          opt_roof_area: ws.E13.v, // Площадь кровли
+
+          kits: {
+            фундамент: [],
+            печное: {
+              печь: {
+                сталь: [],
+                чугун: [],
+              },
+              обустройство: [],
+              дымоход: [],
+              бак: [],
+            },
+            пожарная: [],
+            отделка: {
+              комфорт: {
+                price: 0,
+                items: [],
+              },
+              премиум: {
+                price: 0,
+                items: [],
+              },
+              люкс: {
+                price: 0,
+                items: [],
+              }
+            }
+          }
+        }
+
+        const START_ROW = 64
+        let currCat = ''
+        for (let i = 0; i < 300; i++) {
+          const pos = START_ROW + i
+
+          if (!ws['O' + pos]) {
+            break
+          }
+
+          // Категория
+          if (categories.indexOf(ws['O' + pos].v) !== -1) {
+            currCat = ws['O' + pos].v;
+          } else {
+
+            // Отделка
+            if ([
+              'КОНСТРУКТИВ ОСНОВАНИЯ КАРКАСА',
+              'КРОВЛЯ',
+              'УТЕПЛЕНИЕ',
+              'ВНЕШНЯЯ ОТДЕЛКА',
+              'НАСТИЛ ПОЛА',
+              'ВНУТРЕННЯЯ ОТТДЕЛКА',
+              'ОКНА',
+              'ДВЕРИ',
+              'ПОЛОГА В ПАРНОЙ',
+              'ФИНИШНАЯ ОТДЕЛКА: ПЛИНТУСА ОБНАЛИЧКА',
+              'КОММУНИКАЦИИ, БЛАГОУСТРОЙСТВО',
+              'ЗАЩИТА СТРОЕНИЯ ОТ ВНЕШНИХ ФАКТОРОВ'
+            ].indexOf(currCat) !== -1) {
+              console.log('ws', ws)
+              if (ws['AA' + pos].v) {
+                updateData.kits['отделка']['комфорт'].items.push({
+                  category: currCat.normalize(),
+                  name: ws['O' + pos].v,
+                  price: +(+ws['K' + pos].v * +ws['M' + pos].v).toFixed(),
+                })
+
+              } else if (ws['AB' + pos].v) {
+                updateData.kits['отделка']['премиум'].items.push({
+                  category: currCat.normalize(),
+                  name: ws['O' + pos].v,
+                  price: +(+ws['K' + pos].v * +ws['M' + pos].v).toFixed(),
+                })
+
+              } else if (ws['AC' + pos].v) {
+                updateData.kits['отделка']['люкс'].items.push({
+                  category: currCat.normalize(),
+                  name: ws['O' + pos].v,
+                  price: +(+ws['K' + pos].v * +ws['M' + pos].v).toFixed(),
+                })
+              }
+              // ФУНДАМЕНТ
+            } else if (['ФУНДАМЕНТ'].indexOf(currCat) !== -1) {
+
+              updateData.kits['фундамент'].push({
+                name: ws['O' + pos].v,
+                price: +(+ws['K' + pos].v * +ws['M' + pos].v).toFixed(),
+              })
+              // ПОЖАРНАЯ
+            } else if (['ПОЖАРНАЯ БЕЗОПАСНОСТЬ'].indexOf(currCat) !== -1) {
+
+              updateData.kits['пожарная'].push({
+                name: ws['O' + pos].v,
+                price: +(+ws['K' + pos].v * +ws['M' + pos].v).toFixed(),
+              })
+              // Печи
+            } else if ([
+              'ПЕЧЬ СТАЛЬНАЯ',
+              'ПЕЧЬ ЧУГУННАЯ',
+              'ОБУСТРОЙСТВО ПЕЧИ',
+              'ДЫМОХОД',
+              'БАК',
+            ].indexOf(currCat) !== -1) {
+              switch (currCat) {
+                case 'ПЕЧЬ СТАЛЬНАЯ':
+                  updateData.kits['печное']['печь']['сталь'].push({
+                    name: ws['O' + pos].v,
+                    price: +(+ws['K' + pos].v * +ws['M' + pos].v).toFixed(),
+                  })
+                  break;
+                case 'ПЕЧЬ ЧУГУННАЯ':
+                  updateData.kits['печное']['печь']['чугун'].push({
+                    name: ws['O' + pos].v,
+                    price: +(+ws['K' + pos].v * +ws['M' + pos].v).toFixed(),
+                  })
+                  break;
+                case 'БАК':
+                  updateData.kits['печное']['бак'].push({
+                    name: ws['O' + pos].v,
+                    price: +(+ws['K' + pos].v * +ws['M' + pos].v).toFixed(),
+                  })
+                  break;
+                case 'ОБУСТРОЙСТВО ПЕЧИ':
+                  updateData.kits['печное']['обустройство'].push({
+                    name: ws['O' + pos].v,
+                    price: +(+ws['K' + pos].v * +ws['M' + pos].v).toFixed(),
+                  })
+                  break;
+                case 'ДЫМОХОД':
+                  updateData.kits['печное']['дымоход'].push({
+                    name: ws['O' + pos].v,
+                    price: +(+ws['K' + pos].v * +ws['M' + pos].v).toFixed(),
+                  })
+                  break;
+                default:
+              }
+            }
+          }
+        }
+
+        for (const kitType in updateData.kits['отделка']) {
+          updateData.kits['отделка'][kitType].items.forEach((el, i) => {
+            updateData.kits['отделка'][kitType].price += +updateData.kits['отделка'][kitType].items[i].price
+            delete updateData.kits['отделка'][kitType].items[i].price
+          })
+        }
+
+        console.log(updateData)
+
+        fetch(`/banis?number=${i}`)
+          .then(response => response.json())
+          .then(data => {
+            fetch(`/banis/${data[0].id}`, {
+              headers: {
+                'Authorization': 'Bearer ' + auth.getToken(),
+                'Content-Type': 'application/json'
+              },
+              withCredentials: true,
+              credentials: 'include',
+              method: 'PUT',
+              body: JSON.stringify(updateData),
+            }).then(r => setPars('кб-' + i))
+          })
       }
       setPars('Готово')
 
