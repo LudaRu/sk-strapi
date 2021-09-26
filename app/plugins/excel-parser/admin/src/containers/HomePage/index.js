@@ -54,7 +54,7 @@ const HomePage = () => {
           // opt_ceiling_height: ws.E12.v, // Высота потолка.
           // opt_roof_area: ws.E13.v, // Площадь кровли
 
-          kits: []
+          kits: {}
         }
 
         const START_ROW = 60
@@ -72,12 +72,15 @@ const HomePage = () => {
           }
 
           const price = +(+ws['J' + pos]?.v * +ws['L' + pos]?.v).toFixed()
+          let name = ws['N' + pos]?.v;
           if (price) {
-            updateData.kits.push({
-              name: ws['N' + pos]?.v,
+            name = name.trim().replace(/\.$/, '')
+            updateData.kits[name] = {
               price: price,
-              work:  +(+ws['Y' + pos]?.v).toFixed()
-            })
+              work:  +(+ws['Y' + pos]?.v).toFixed(),
+              count: +ws['J' + pos]?.v.toFixed(),
+              priceCount: +ws['L' + pos]?.v.toFixed(1),
+            }
           }
         }
 
